@@ -1,5 +1,5 @@
 # chatapp-with-signalr-n-mongodb
 Chatapp
 
-[![Foo](https://www.hizliresim.com/frt3oo3)
+![Foo](https://i.hizliresim.com/frt3oo3.png)
 
