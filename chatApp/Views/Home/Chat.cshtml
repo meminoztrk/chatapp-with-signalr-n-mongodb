@@ -1,0 +1,184 @@
+﻿@model dynamic
+@using Microsoft.AspNetCore.Http
+@inject IHttpContextAccessor HttpContextAccessor
+
+@{
+    Layout = null;
+    string adsoyad = @HttpContextAccessor.HttpContext.Session.GetString("username");
+    string userid = @HttpContextAccessor.HttpContext.Session.GetString("userid");
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    @* <meta charset="utf-8"> *@
+    <title>title</title>
+    <link href="~/css/site.css" rel="stylesheet"/>
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;1,100;1,300;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-+0n0xVW2eSR5OomGNYDnhzAbDsOXxcvSN1TPprVMTNDbiYZCxYbOOl7+AMvyTG2x" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-gtEjrD/SeCtmISkJkNUaaKMoLD0//ElJ19smozuHV6z3Iehds+3Ulb9Bn9Plx0x4" crossorigin="anonymous"></script>
+    <script src="~/SignalR/jquery.min.js"></script>
+    <script src="~/SignalR/signalr.min.js"></script>
+    <script src="~/js/site.js"></script>
+    <script>
+        const connection = new signalR.HubConnectionBuilder().withUrl("http://www.memin-chatapp.somee.com/myhub").build();
+        // const connection = new signalR.HubConnectionBuilder().withUrl("https://localhost:5001/myhub").build();
+        connection.start();
+        
+        function chatlist() {
+                    url = '/Home/ChatList/';
+                    $.getJSON(url, function (data){
+                        data.forEach(item => {
+                            let getir = `<div class="col-md-1 p-1 imlec" id="chatgetir" data-id="${item.chatid}">#${item.chatismi}</div>`;
+                            $("#chatlist").append(getir);
+                        })
+                    })
+        }
+        let geciciChatId;
+        let ensonid; 
+        let getiryorum;
+        $(document).on("click", "#chatgetir", async function () {
+              let id = $(this).data("id").toString();
+              connection.invoke("LeaveToGroup", geciciChatId).catch(error => console.log(`HATA OLUŞTU ${error}`));
+              geciciChatId = id;
+              connection.invoke("AddToGroup", geciciChatId).catch(error => console.log(`HATA OLUŞTU ${error}`));
+              $("#myDiv").html("");
+              url = '/Home/YorumList/' + id;
+              ensonid = "";
+              $.getJSON(url, function (data){
+                  data.forEach(item => {
+                      if (ensonid == item.userid)
+                      {
+                          getiryorum = `<div style="margin-left: 48px;color: rgb(187, 187, 187);">
+                                              <span>${item.yorums}</span><br>
+                                        </div>`; 
+                          ensonid = item.userid;
+                      }
+                      else{
+                          getiryorum = `<div class="mt-3">
+                                            <img src="https://www.freepnglogos.com/uploads/discord-logo-png/discord-logo-logodownload-download-logotipos-1.png"
+                                              alt="..." class="rounded-circle" style="width: 40px;height: 40px;">
+                                            <span class="p-1">${item.adsoyad}</span><span style="color: #6b6c6d;font-size: 12px;">bugün saat xx</span>
+                                            <div style="margin-left: 48px;color: rgb(187, 187, 187);">
+                                                  <span>${item.yorums}</span><br>
+                                            </div>
+                                        </div>`; 
+                          ensonid = item.userid;
+                      }
+                                  
+                      $("#myDiv").append(getiryorum);
+                      $(window).scrollTop($(document).height()); 
+                  })
+                 
+              })
+              console.log("chatten gelen en son: " + ensonid);
+               
+        });
+        
+        $(document).ready(() => {
+            <!-- connection --> 
+            
+            
+            chatlist();
+
+            <!-- tanimlar --> 
+                    
+            const adisoyadi = "@adsoyad";
+            const useridsi = "@userid";
+            
+
+            <!-- mesaj invoke --> 
+            $("#message").keyup(function(e){
+                if(e.keyCode == 13)
+                {
+                    let message = $("#message").val();
+                    if ($("#message").val() != ""){
+                        connection.invoke("SendMessageAsync", adisoyadi, useridsi, message, geciciChatId).catch(error => console.log(`HATA OLUŞTU ${error}`));
+                        $("#message").val("");                                                         
+                                    $.ajax({
+                                        url: '/Home/EkleJson/',
+                                        type: 'Post',
+                                        dataType: 'json',
+                                        data: { yorums: message, chatid: geciciChatId, userid:useridsi, adsoyad:adisoyadi},
+                                        success: function (data) {
+                                            //console.log(data);
+                                        },
+                                        error: function (result) {
+                                            alert("Something wrong");
+                                        }
+                                    })
+                    }             
+                }
+            });
+
+            <!-- mesaj --> 
+            connection.on("receiveMessage",(adisoyadi, userid, message) => {    
+                 var dt = new Date();
+                 var time = dt.getHours() + ":" + dt.getMinutes();
+                 if(ensonid==userid){     
+                     console.log("Enson id " + ensonid + "User id " + userid);
+                     $("#myDiv").append(`<div style="margin-left: 48px;color: rgb(187, 187, 187);">
+                                          <span>${message}</span><br>
+                                         </div>`);
+                     $(document).scrollTop($(document).height());  
+                     ensonid = userid;
+                 }
+                 else{
+                     console.log("Enson id " + ensonid + "User id " + userid);
+                     $("#myDiv").append(`<div class="mt-3">
+                                           <img src="https://www.freepnglogos.com/uploads/discord-logo-png/discord-logo-logodownload-download-logotipos-1.png"
+                                           alt="..." class="rounded-circle" style="width: 40px;height: 40px;">
+                                           <span class="p-1">${adisoyadi}</span><span style="color: #6b6c6d;font-size: 12px;">bugün saat ${time}</span>
+                                           <div style="margin-left: 48px;color: rgb(187, 187, 187);">
+                                              <span>${message}</span><br>
+                                           </div>
+                                         </div>`);
+                     $(document).scrollTop($(document).height());  
+                     ensonid = userid;                
+                 }
+            });
+            
+            
+        });
+        
+    </script>
+</head>
+<body id="please-scroll">
+
+<div class="container-fluid" style="background-color: #23272a;">
+    <div class="row">
+        
+        <div class="col-md-2" style="color:rgb(192, 192, 192);height: 100vh;">
+
+            <div class="container-fluid position-fixed p-4 mt-2" id="chatlist">
+            </div>
+
+        </div>
+
+        <div class="col-md-10 d-flex" style="background-color:#2c2f33;">
+
+            <div class="col-md-12 p-3" style="color: white;margin-bottom: 3.5rem;" id="myDiv">
+                <!-- mesajlar buraya gelecek -->
+            </div>
+
+            <div class="col position-fixed" style="background-color:#2c2f33;bottom: 0;width: 78%;height: 50px;margin-left: 14px;">
+                <div class="col" style="background-color:#45494e;border-radius: 10px;height: 40px;">
+                    <input type="text" class="inputbox" placeholder="mesaj gönder" id="message">
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+</body>
+
+<style>
+  
+</style>
+
+</html>

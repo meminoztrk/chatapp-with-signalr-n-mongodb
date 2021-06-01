@@ -1,0 +1,83 @@
+﻿@using System.Net.Http
+@using Microsoft.AspNetCore.Http
+@inject IHttpContextAccessor HttpContextAccessor
+@{
+    ViewData["Title"] = "Home Page";
+    var userid = @HttpContextAccessor.HttpContext.Session.GetString("userid");
+    var adsoyad = @HttpContextAccessor.HttpContext.Session.GetString("adsoyad");
+}
+
+<div class="text-center">
+    <h1 class="display-4">Welcome</h1>
+    <p>Learn about <a href="https://docs.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+</div>
+<div>
+    <p>@userid</p>
+    <p>@adsoyad</p>
+</div>
+<div>
+    <table class="table"></table>
+</div>
+<div>
+    <input type="text" id="yorums">
+    <button id="ekle" class="btn btn-default">EKLE</button>
+</div>
+
+@section scripts{
+    <script>
+        var datatest;
+        function Veriler() {
+            var url = '/Home/Veriler/';
+            $('table').html("");
+            var thead = '<thead><tr><td>Id</td><td>Yorum</td></tr></thead>';
+            $('table').append(thead);
+            $.getJSON(url, function (data) {
+                datatest = data;
+                data.forEach(item => {
+                    let output = `
+                               <tr><td>${item.yorumid}</td><td>${item.yorums}</td><td><button id="sil" class="btn btn-danger" data-id="${item.yorumid}">Sil</button></td></tr>
+                         `;
+                    console.log(item.yorumid)
+                    $('table').append(output)
+                })
+            });
+        }
+        $(document).ready(function () {
+            Veriler();
+        });
+
+        $(document).on("click", "#ekle", async function () {
+            var yorumunuz = $("#yorums").val();
+
+            $.ajax({
+                url: '/Home/EkleJson/',
+                type: 'Post',
+                dataType: 'json',
+                data: { yorums: yorumunuz },
+                success: function (data) {
+                    console.log(data);
+                    let output = `<tr><td>5</td><td>${yorumunuz}</td></tr>`;
+                    $('table').append(output);
+                },
+                error: function (result) {
+                    alert("Something wrong");
+                }
+            })
+        });
+        $(document).on("click", "#sil", async function () {
+            var id = $(this).data("id");
+            console.log(id);
+            $.ajax({
+                url: '/Home/SilJson/' + id,
+                type: 'Get',
+                success: function () {
+                    Veriler();
+                },
+                error: function (result) {
+                    alert("Something wrong");
+                }
+            })
+        });
+
+    </script>
+}

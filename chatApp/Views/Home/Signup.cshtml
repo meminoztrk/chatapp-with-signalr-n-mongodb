@@ -1,0 +1,30 @@
+﻿@model chatApp.Models.User
+
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <title>title</title>
+    <form asp-action="Signup" asp-controller="Home" method="post">
+        <label>USER NAME</label>
+        <input name="username" type="text" required></input><br>
+        <label>PASSWORD</label>
+        <input name="password" type="password" required></input><br>
+        <label>AD</label>
+        <input name="ad" type="text" required></input><br>
+        <label>SOYAD</label>
+        <input name="soyad" type="text" required></input><br>
+        
+        <button type="submit">KAYIT OL</button>
+    </form>
+</head>
+<body>
+<div>
+      
+</div>
+</body>
+</html>
