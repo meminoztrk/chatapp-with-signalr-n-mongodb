@@ -13,7 +13,7 @@ Chatapp
     }
   },
   "AllowedHosts": "*",
-  "MongoUri": " databse url gelecek "
+  "MongoUri": " database-connection "
 }
 
 ```
